@@ -1,3 +1,4 @@
+/*
 Observable = function (initializer) {
 	this.listeners = {};
 	typeof initializer !== 'undefined' && initializer.hasOwnProperty('listeners') && this.on(initializer.listeners);
@@ -89,3 +90,4 @@ Observable.prototype = {
 		return Listener;
 	})()
 };
+*/

@@ -9,6 +9,7 @@ var suite = new Suite({
 
 	tearDown : function () {
 	},
+	/*
 
 	'can create an instance of observable' : function () {
 		Assert((new Observable()) instanceof Observable,'couldnt create an observable');
@@ -122,16 +123,8 @@ var suite = new Suite({
 	},
 
 	'listeners are called when their event is fired' : function () {
-		/*
-		var observable = new Observable({
-			listeners : {
-				derp : function () {
-				},
-				scope : scope
-			}
-		});
-		*/
 	}
 
+		*/
 });
 suite.run();
