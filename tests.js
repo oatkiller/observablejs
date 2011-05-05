@@ -42,6 +42,73 @@ var suite = new Suite({
 		o.fireEvent(eventName);
 
 		Assert(callCount === 0,'un failed');
+	},
+
+	'docs' : function () {
+		// Subclass or instantiate Observable
+		var Door = Observable.subclass({
+			open : function () {
+				this.fireEvent('open');
+			},
+			close : function () {
+				this.fireEvent('close');
+			}
+		});
+
+		var door = new Door();
+
+		// use 'on' to register to these events
+		door.on('open',function () {
+			console.log('Close the door! Its cold!');
+		});
+
+		door.on('close',function () {
+			console.log('Open the door, its hot in here!');
+		});
+
+		// If you override the constructor, call the super constructor
+		var Cat = Observable.subclass({
+			constructor : function (color) {
+				this.color = color;
+				// call the Observable constructor
+				this.uber(arguments);
+			},
+			sleep : function (howLong) {
+				// pass any number of extra arguments to fireEvent
+				this.fireEvent('sleep',howLong);
+			},
+			eat : function (food) {
+				// pass any number of extra arguments to fireEvent
+				this.fireEvent('eat',food);
+			}
+		});
+
+		var cat = new Cat();
+
+		var house = {
+			address : '1234 Gumdrop Lane',
+			cat : cat
+		};
+
+		// extra arguments are passed to handlers
+		cat.on('sleep',function (howLong) {
+			console.debug('Cat is sleeping for ' + howLong + ' hours at ' + this.address);
+			// the third argument to 'on' is scope
+			// 'this' will be house inside of the handler
+		},house);
+
+
+		// store the handler and scope in order to remove a listener
+		var handler = function () {
+			console.debug('Sleeping now');
+		},
+			scope = house;
+
+		// add a listener
+		cat.on('sleep',handler,scope);
+
+		// call 'un' to remove it
+		cat.un('sleep',handler,scope);
 	}
 
 });
