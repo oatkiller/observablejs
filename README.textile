@@ -1,3 +1,34 @@
+h1. Methods:
+
+h2. .on
+
+*Register to an event*
+
+@.on(eventName,handler,scope);@
+
+*eventName* - {String} - name of the event
+*handler* - {Function}, will be called in passed scope with any additional arguments passed to fireEvent
+*scope* - {Object} to call handler with
+
+h2. .un
+
+*Unregister a handler*
+
+@.un(eventName,handler,scope);@
+
+Use the same signature as .on.
+
+h2. .fireEvent
+
+*Fire an event*
+
+@.fireEvent(eventName,...);@
+
+*eventName* - {String} - name of the event to fire
+*anything* - Any number of arguments of any type to be passed to registered handlers
+
+h1. Examples
+
 <pre><code>
 // Subclass or instantiate Observable
 var Door = Observable.subclass({
