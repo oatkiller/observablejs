@@ -4,27 +4,100 @@ var Observable = function () {
 Observable.prototype = {
 	constructor : Observable,
 
-	on : function (eventName,callback,scope) {
-		var listeners = this.getListenersByEventName(eventName);
-		listeners.push({
-			callback : callback,
-			scope : scope
-		});
-	},
+	getSingleSignaturesFromMultiSignature : function (config) {
+		var fn,
+			options,
+			scope = config.scope,
+			defaultOptions = {
+				single : config.single,
+				debounce : config.debounce
+			},
+			signatures = [];
 
-	un : function (eventName,callback,scope) {
-		var listeners = this.getListenersByEventName(eventName),
-			i = 0,
-			listener,
-			newEventListeners = [];
+		for (var property in config) {
+			if (property !== 'single' && property !== 'scope' && property !== 'debounce') {
+				if (typeof config[property] === 'function') {
+					fn = config[property];
+				} else if (config[property].fn && typeof config[property].fn === 'function') {
+					fn = config[property].fn;
 
-		for (; i < listeners.length; i++) {
-			listener = listeners[i];
-			if (listener.callback !== callback || listener.scope !== scope) {
-				newEventListeners.push(listener);
+					options = {
+						single : config[property].single !== undefined ? config[property].single : defaultOptions.single,
+						debounce : config[property].debounce !== undefined ? config[property].debounce : defaultOptions.debounce,
+						scope : config[property].scope !== undefined ? config[property].scope : scope
+					};
+
+				} else {
+					throw new TypeError('handler not found.');
+				}
+
+				// its not a config, so its an event name
+				signatures.push([
+					property,
+					fn,
+					options && options.scope !== undefined ? options.scope : scope,
+					options || defaultOptions
+				]);
 			}
 		}
-		this.listeners[eventName] = newEventListeners;
+		return signatures;
+	},
+
+	on : function (eventName,fn,scope,options) {
+		// handle config signature
+		if (typeof eventName === 'object' && arguments.length === 1) {
+			var signatures = this.getSingleSignaturesFromMultiSignature(eventName);
+			for (var i = 0; i < signatures.length; i++) {
+				arguments.callee.apply(this,signatures[i]);
+			}
+		} else {
+			if (this.hasListener.apply(this,arguments)) {
+				throw new Error('Trying to add an already added listener.');
+			}
+			
+			// handle normal signature
+			var listeners = this.getListenersByEventName(eventName);
+			listeners.push({
+				fn : fn,
+				scope : scope,
+				single : options ? options.single : undefined,
+				debounce : options ? options.debounce : undefined
+			});
+		}
+	},
+
+	hasListener : function (eventName,fn,scope,options) {
+		var listeners = this.getListenersByEventName(eventName),
+			listener,
+			i = 0;
+		for (; i < listeners.length; i++) {
+			listener = listeners[i];
+			if (listener.fn === fn && listener.scope === scope && (listener.single === undefined || (options && listener.single === options.single)) && (listener.debounce === undefined || (options && listener.debounce === options.debounce))) {
+				return true;
+			}
+		}
+	},
+
+	un : function (eventName,fn,scope,options) {
+		if (typeof eventName === 'object' && arguments.length === 1) {
+			var signatures = this.getSingleSignaturesFromMultiSignature(eventName);
+			for (var i = 0; i < signatures.length; i++) {
+				arguments.callee.apply(this,signatures[i]);
+			}
+		} else {
+			var listeners = this.getListenersByEventName(eventName),
+				i = 0,
+				listener;
+
+			for (; i < listeners.length; i++) {
+				listener = listeners[i];
+				if (listener.fn === fn && listener.scope === scope && (!options || options.single === listener.single) && (!options || options.debounce === listener.debounce)) {
+					// remove this listener
+					listeners.splice(i,1);
+					return;
+				}
+			}
+		}
 	},
 	
 	getListenersByEventName : function (eventName) {
@@ -41,7 +114,10 @@ Observable.prototype = {
 
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			listener.callback.apply(listener.scope,payload);
+			listener.fn.apply(listener.scope,payload);
+			if (listener.single) {
+				listeners.splice(i--,1);
+			}
 		}
 	}
 

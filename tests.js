@@ -44,6 +44,57 @@ var suite = new Suite({
 		Assert(callCount === 0,'un failed');
 	},
 
+	'on has a multiple listener signature. options can be passed, including scope and single. options on top level are default' : function () {
+		var o = new Observable(),
+			firstEventCount = 0,
+			secondEventCount = 0,
+			thirdEventCount = 0,
+			scope = {},
+			secondScope = {},
+			firstEventPayload = {},
+			secondEventPayload = {},
+			thirdEventPayload = {};
+
+		o.on({
+			firstEvent : function (payload) {
+				Assert(this === scope,'first event called in wrong scope');
+				Assert(payload === firstEventPayload,'first payload wrong');
+				firstEventCount++;
+			},
+			secondEvent : {
+				fn : function (payload) {
+					Assert(this === secondScope,'second scope wrong');
+					Assert(payload === secondEventPayload,'second payload wrong');
+					secondEventCount++;
+				},
+				scope : secondScope
+			},
+			thirdEvent : {
+				fn : function (payload) {
+					Assert(this === scope,'third scope wrong');
+					Assert(payload === thirdEventPayload,'third payload wrong');
+					thirdEventCount++;
+				},
+				single : true
+			},
+			scope : scope
+		});
+
+		o.fireEvent('firstEvent',firstEventPayload);
+		Assert(firstEventCount === 1,'first event count wrong');
+
+		o.fireEvent('secondEvent',secondEventPayload);
+		Assert(secondEventCount === 1,'second event count wrong');
+
+		o.fireEvent('thirdEvent',thirdEventPayload);
+		Assert(thirdEventCount === 1,'third event count wrong');
+
+		// this one is a single
+		o.fireEvent('thirdEvent',thirdEventPayload);
+		Assert(thirdEventCount === 1,'third event count wrong second time');
+
+	},
+
 	'docs' : function () {
 		// Subclass or instantiate Observable
 		var Door = Observable.subclass({
