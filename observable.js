@@ -93,11 +93,26 @@ Observable.prototype = {
 				listener = listeners[i];
 				if (listener.fn === fn && listener.scope === scope && (!options || options.single === listener.single) && (!options || options.debounce === listener.debounce)) {
 					// remove this listener
-					listeners.splice(i,1);
+					this.removeListener(eventName,listener,i);
 					return;
 				}
 			}
 		}
+	},
+
+	removeListener : function (eventName,listener,i) {
+		var listeners = this.getListenersByEventName(eventName);
+		if (i === undefined || listeners[i] !== listener) {
+			for (var j = 0; j < listeners.length; j++) {
+				if (listeners[j] === listener) {
+					i = j;
+					break;
+				}
+			}
+			throw new Error('cant find listener.');
+		}
+		listener.debounceTimeout && clearTimeout(debounceTimeout);
+		listeners.splice(i,1);
 	},
 	
 	getListenersByEventName : function (eventName) {
@@ -110,15 +125,22 @@ Observable.prototype = {
 		var listeners = this.getListenersByEventName(eventName),
 			i = 0,
 			listener,
-			payload = this.slice.call(arguments,1);
+			payload = this.slice.call(arguments,1),
+			self = this;
 
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			listener.fn.apply(listener.scope,payload);
-			if (listener.single) {
-				listeners.splice(i--,1);
+			if (listener.debounce !== undefined) {
+				clearTimeout(listener.debounceTimeout);
+				listener.debounceTimeout = setTimeout(function () {
+					delete listener.debounceTimeout;
+					listener.fn.apply(listener.scope,payload);
+					listener.single && self.removeListener(eventName,listener,i);
+				},listener.debounce);
+			} else {
+				listener.fn.apply(listener.scope,payload);
+				listener.single && this.removeListener(eventName,listener,i);
 			}
 		}
 	}
-
 };

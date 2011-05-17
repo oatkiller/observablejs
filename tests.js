@@ -95,6 +95,48 @@ var suite = new Suite({
 
 	},
 
+	'debounce works' : function () {
+		var o = new Observable(),
+			eventName = 'fire',
+			scope = {},
+			time = 30,
+			callCount = 0,
+			expectedPayload = {},
+			timeout,
+			cancel = function () {
+				clearTimeout(timeout);
+			}
+
+		o.on(eventName,function (payload) {
+			callCount++;
+			Assert(this === scope);
+			Assert(payload === expectedPayload);
+		},scope,{
+			debounce : time
+		});
+
+		o.fireEvent(eventName,expectedPayload);
+		Assert(callCount === 0,'event fired regardless of debounce');
+
+		timeout = setTimeout(function () {
+			Assert(callCount === 0,'event fired regardless of debounce');
+			o.fireEvent(eventName,expectedPayload);
+			Assert(callCount === 0,'event fired regardless of debounce');
+			timeout = setTimeout(function () {
+				Assert(callCount === 0,'event fired regardless of debounce');
+				timeout = setTimeout(function () {
+					Assert(callCount === 1,'event didnt debounce when expected');
+					timeout = setTimeout(function () {
+						Assert(callCount === 1,'event debounced twice');
+						Resume();
+					},time);
+				},20);
+			},time - 10);
+		},time - 10);
+
+		Wait(cancel,200,'Debounce failed');
+	},
+
 	'docs' : function () {
 		// Subclass or instantiate Observable
 		var Door = Observable.subclass({
