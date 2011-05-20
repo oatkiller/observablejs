@@ -44,7 +44,7 @@ var suite = new Suite({
 		Assert(callCount === 0,'un failed');
 	},
 
-	'on has a multiple listener signature. options can be passed, including scope and single. options on top level are default' : function () {
+	'on has a multiple listener signature. default scope can be passed at top level.' : function () {
 		var o = new Observable(),
 			firstEventCount = 0,
 			secondEventCount = 0,
@@ -52,8 +52,7 @@ var suite = new Suite({
 			scope = {},
 			secondScope = {},
 			firstEventPayload = {},
-			secondEventPayload = {},
-			thirdEventPayload = {};
+			secondEventPayload = {};
 
 		o.on({
 			firstEvent : function (payload) {
@@ -69,14 +68,6 @@ var suite = new Suite({
 				},
 				scope : secondScope
 			},
-			thirdEvent : {
-				fn : function (payload) {
-					Assert(this === scope,'third scope wrong');
-					Assert(payload === thirdEventPayload,'third payload wrong');
-					thirdEventCount++;
-				},
-				single : true
-			},
 			scope : scope
 		});
 
@@ -86,15 +77,43 @@ var suite = new Suite({
 		o.fireEvent('secondEvent',secondEventPayload);
 		Assert(secondEventCount === 1,'second event count wrong');
 
-		o.fireEvent('thirdEvent',thirdEventPayload);
-		Assert(thirdEventCount === 1,'third event count wrong');
-
-		// this one is a single
-		o.fireEvent('thirdEvent',thirdEventPayload);
-		Assert(thirdEventCount === 1,'third event count wrong second time');
-
 	},
 
+	'initial listeners works' : function () {
+		var scope = {},
+			expectedPayload = {},
+			expectedStopPayload = {},
+			stopScope = {},
+			startCount = 0,
+			stopCount = 0;
+
+		var Subclass = Observable.subclass({
+			listeners : {
+				start : function (payload) {
+					startCount++;
+					Assert(payload === expectedPayload,'payload was wrong');
+					Assert(this === scope,'scope was wrong');
+				},
+				stop : {
+					fn : function (payload) {
+						stopCount++;
+						Assert(payload === expectedStopPayload,'payload was wrong');
+						Assert(this === stopScope,'scope was wrong');
+					},
+					scope : stopScope
+				},
+				scope : scope
+			}
+		});
+
+		var subclass = new Subclass();
+		subclass.fireEvent('start',expectedPayload);
+		subclass.fireEvent('stop',expectedStopPayload);
+		Assert(startCount === 1,'start didnt handle');
+		Assert(stopCount === 1,'stop didnt handle');
+	},
+
+	/*
 	'debounce works' : function () {
 		var o = new Observable(),
 			eventName = 'fire',
@@ -136,6 +155,7 @@ var suite = new Suite({
 
 		Wait(cancel,200,'Debounce failed');
 	},
+	*/
 
 	'docs' : function () {
 		// Subclass or instantiate Observable
@@ -195,7 +215,7 @@ var suite = new Suite({
 		var handler = function () {
 			console.debug('Sleeping now');
 		},
-			scope = house;
+		scope = house;
 
 		// add a listener
 		cat.on('sleep',handler,scope);

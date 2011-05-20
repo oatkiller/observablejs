@@ -1,5 +1,15 @@
 var Observable = function () {
+	// if this was preconfigured with listeners, such as by a subclass
+	if (typeof this.listeners === 'object') {
+		// store those
+		var initialListeners = this.listeners;
+	}
+
+	// set the listeners hash
 	this.listeners = {};
+
+	// register initial listeners
+	this.on(initialListeners);
 };
 Observable.prototype = {
 	constructor : Observable,
@@ -7,25 +17,18 @@ Observable.prototype = {
 	getSingleSignaturesFromMultiSignature : function (config) {
 		var fn,
 			options,
-			scope = config.scope,
-			defaultOptions = {
-				single : config.single,
-				debounce : config.debounce
-			},
+			defaultScope = config.scope,
+			scope,
 			signatures = [];
 
 		for (var property in config) {
-			if (property !== 'single' && property !== 'scope' && property !== 'debounce') {
+			if (property !== 'scope') {
 				if (typeof config[property] === 'function') {
 					fn = config[property];
 				} else if (config[property].fn && typeof config[property].fn === 'function') {
 					fn = config[property].fn;
 
-					options = {
-						single : config[property].single !== undefined ? config[property].single : defaultOptions.single,
-						debounce : config[property].debounce !== undefined ? config[property].debounce : defaultOptions.debounce,
-						scope : config[property].scope !== undefined ? config[property].scope : scope
-					};
+					config[property].scope !== undefined && (scope = config[property].scope);
 
 				} else {
 					throw new TypeError('handler not found.');
@@ -35,86 +38,73 @@ Observable.prototype = {
 				signatures.push([
 					property,
 					fn,
-					options && options.scope !== undefined ? options.scope : scope,
-					options || defaultOptions
+					scope || defaultScope
 				]);
 			}
 		}
 		return signatures;
 	},
 
-	on : function (eventName,fn,scope,options) {
-		// handle config signature
-		if (typeof eventName === 'object' && arguments.length === 1) {
-			var signatures = this.getSingleSignaturesFromMultiSignature(eventName);
-			for (var i = 0; i < signatures.length; i++) {
-				arguments.callee.apply(this,signatures[i]);
-			}
-		} else {
-			if (this.hasListener.apply(this,arguments)) {
-				throw new Error('Trying to add an already added listener.');
-			}
-			
-			// handle normal signature
-			var listeners = this.getListenersByEventName(eventName);
-			listeners.push({
-				fn : fn,
-				scope : scope,
-				single : options ? options.single : undefined,
-				debounce : options ? options.debounce : undefined
-			});
-		}
-	},
-
-	hasListener : function (eventName,fn,scope,options) {
+	hasListener : function (eventName,fn,scope) {
 		var listeners = this.getListenersByEventName(eventName),
 			listener,
 			i = 0;
+
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			if (listener.fn === fn && listener.scope === scope && (listener.single === undefined || (options && listener.single === options.single)) && (listener.debounce === undefined || (options && listener.debounce === options.debounce))) {
+			if (listener.fn === fn && listener.scope === scope) {
 				return true;
 			}
 		}
 	},
 
-	un : function (eventName,fn,scope,options) {
-		if (typeof eventName === 'object' && arguments.length === 1) {
-			var signatures = this.getSingleSignaturesFromMultiSignature(eventName);
+	handleMultipleSignature : function (args) {
+		if (typeof args[0] === 'object' && args.length === 1) {
+			var signatures = this.getSingleSignaturesFromMultiSignature(args[0]);
 			for (var i = 0; i < signatures.length; i++) {
-				arguments.callee.apply(this,signatures[i]);
+				args.callee.apply(this,signatures[i]);
 			}
-		} else {
-			var listeners = this.getListenersByEventName(eventName),
-				i = 0,
-				listener;
-
-			for (; i < listeners.length; i++) {
-				listener = listeners[i];
-				if (listener.fn === fn && listener.scope === scope && (!options || options.single === listener.single) && (!options || options.debounce === listener.debounce)) {
-					// remove this listener
-					this.removeListener(eventName,listener,i);
-					return;
-				}
-			}
+			return true;
 		}
 	},
 
-	removeListener : function (eventName,listener,i) {
+	on : function (eventName,fn,scope) {
+		// handle config signature
+		if (this.handleMultipleSignature(arguments)) {
+			return;
+		}
+
+		if (this.hasListener.apply(this,arguments)) {
+			throw new Error('Trying to add an already added listener.');
+		}
+		
+		// handle normal signature
 		var listeners = this.getListenersByEventName(eventName);
-		if (i === undefined || listeners[i] !== listener) {
-			for (var j = 0; j < listeners.length; j++) {
-				if (listeners[j] === listener) {
-					i = j;
-					break;
-				}
-			}
-			throw new Error('cant find listener.');
-		}
-		listener.debounceTimeout && clearTimeout(debounceTimeout);
-		listeners.splice(i,1);
+		listeners.push({
+			fn : fn,
+			scope : scope
+		});
 	},
-	
+
+	un : function (eventName,fn,scope) {
+		if (this.handleMultipleSignature(arguments)) {
+			return;
+		}
+
+		var listeners = this.getListenersByEventName(eventName),
+			i = 0,
+			listener;
+
+		for (; i < listeners.length; i++) {
+			listener = listeners[i];
+			if (listener.fn === fn && listener.scope === scope) {
+				// remove this listener
+				listeners.splice(i,1);
+				return;
+			}
+		}
+	},
+
 	getListenersByEventName : function (eventName) {
 		return this.listeners.hasOwnProperty(eventName) ? this.listeners[eventName] : (this.listeners[eventName] = []);
 	},
@@ -130,17 +120,7 @@ Observable.prototype = {
 
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			if (listener.debounce !== undefined) {
-				clearTimeout(listener.debounceTimeout);
-				listener.debounceTimeout = setTimeout(function () {
-					delete listener.debounceTimeout;
-					listener.fn.apply(listener.scope,payload);
-					listener.single && self.removeListener(eventName,listener,i);
-				},listener.debounce);
-			} else {
-				listener.fn.apply(listener.scope,payload);
-				listener.single && this.removeListener(eventName,listener,i);
-			}
+			listener.fn.apply(listener.scope,payload);
 		}
 	}
 };
