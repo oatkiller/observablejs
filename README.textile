@@ -94,4 +94,41 @@ cat.on('sleep',handler,scope);
 
 // call 'un' to remove it
 cat.un('sleep',handler,scope);
+
+// Add multiple event handlers at once
+var car = new Observable(),
+	emergencyBreak = {
+		turnOn : function () {}
+	},
+	gas = 1;
+
+car.on({
+	stop : {
+		fn : function () {
+			this.turnOn();
+		},
+		// override scope like this
+		scope : emergencyBreak
+	},
+	start : function () {
+		gas--;
+	},
+	// scope at the top level is default
+	scope : car
+});
+
+// Add listeners in the prototype of a subclass
+var Seasons = Observable.subclass({
+	listeners : {
+		spring : {
+			fn : function () {
+				this.bloom();
+			},
+			scope : flowers
+		},
+		winter : snow.fall,
+		scope : snow
+	}
+});
+
 </code></pre>
