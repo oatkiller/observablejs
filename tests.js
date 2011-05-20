@@ -246,7 +246,13 @@ var suite = new Suite({
 		});
 
 		// Add listeners in the prototype of a subclass
-		var Seasons = Observable.subclass({
+		var flowers = {
+			bloom : function () {}
+		},
+		snow = {
+			fall : function () {}
+		},
+		Seasons = Observable.subclass({
 			listeners : {
 				spring : {
 					fn : function () {
