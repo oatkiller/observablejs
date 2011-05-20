@@ -18,14 +18,17 @@ Second Signature has a single arguments, config:
 
 Like:
 
+<pre><code>
 observble.on({
 	eventName : function () {
 	},
 	scope : scope
 });
+</code></pre>
 
 or:
 
+<pre><code>
 observable.on({
 	eventName : function () {
 	},
@@ -36,6 +39,7 @@ observable.on({
 	},
 	scope : defaultScope
 });
+</code></pre>
 
 h2. .un
 
