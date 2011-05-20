@@ -162,4 +162,33 @@ var Seasons = Observable.subclass({
 	}
 });
 
+// Cancel an event by passing false
+var Door = Observable.subclass({
+	closed : true,
+	open : function () {
+		if (this.fireEvent('open')) {
+			// this wont happen, the event returns false after canceling
+			this.closed = false;
+		}
+	}
+});
+var LockingDoor = Door.subclass({
+	locked : true,
+	listeners : {
+		open : function () {
+			// dont open, its locked
+			return !this.locked;
+		}
+	}
+});
+
+var lockingDoor = new LockingDoor();
+
+lockingDoor.on('open',function () {
+	// this wont happen, the event is cancelled
+	console.debug('Welcome!');
+});
+
+lockingDoor.open();
+Assert(lockingDoor.closed === true,'Door opened');
 </code></pre>

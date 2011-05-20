@@ -113,6 +113,22 @@ var suite = new Suite({
 		Assert(stopCount === 1,'stop didnt handle');
 	},
 
+	'cancel an event by passing false' : function () {
+		var o = new Observable(),
+			firstCount = 0,
+			secondCount = 0;
+		o.on('event',function () {
+			firstCount++;
+			return false;
+		});
+		o.on('event',function () {
+			secondCount++;
+		});
+		o.fireEvent('event');
+		Assert(firstCount === 1,'First handler wasnt called');
+		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
+	},
+
 	/*
 	'debounce works' : function () {
 		var o = new Observable(),
@@ -264,6 +280,36 @@ var suite = new Suite({
 				scope : snow
 			}
 		});
+
+		// Cancel an event by passing false
+		var Door = Observable.subclass({
+			closed : true,
+			open : function () {
+				if (this.fireEvent('open')) {
+					// this wont happen, the event returns false after canceling
+					this.closed = false;
+				}
+			}
+		});
+		var LockingDoor = Door.subclass({
+			locked : true,
+			listeners : {
+				open : function () {
+					// dont open, its locked
+					return !this.locked;
+				}
+			}
+		});
+
+		var lockingDoor = new LockingDoor();
+
+		lockingDoor.on('open',function () {
+			// this wont happen, the event is cancelled
+			console.debug('Welcome!');
+		});
+
+		lockingDoor.open();
+		Assert(lockingDoor.closed === true,'Door opened');
 	}
 
 });

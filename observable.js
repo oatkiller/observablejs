@@ -116,11 +116,13 @@ Observable.prototype = {
 			i = 0,
 			listener,
 			payload = this.slice.call(arguments,1),
-			self = this;
+			result;
 
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			listener.fn.apply(listener.scope,payload);
+			if (listener.fn.apply(listener.scope || this,payload) === false) {
+				return false;
+			}
 		}
 	}
 };
