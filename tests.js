@@ -129,49 +129,67 @@ var suite = new Suite({
 		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
 	},
 
-	/*
-	'debounce works' : function () {
-		var o = new Observable(),
-			eventName = 'fire',
-			scope = {},
-			time = 30,
-			callCount = 0,
+	'register with default listeners' : function () {
+		var scope = {},
 			expectedPayload = {},
-			timeout,
-			cancel = function () {
-				clearTimeout(timeout);
+			count = 0;
+
+		var o = new (Observable.subclass({
+			listeners : {
+				event : function (payload) {
+					Assert(this === scope,'scope wasnt passed');
+					Assert(payload === expectedPayload,'payload wasnt passed');
+					count++;
+				},
+				scope : scope
 			}
+		}))();
 
-		o.on(eventName,function (payload) {
-			callCount++;
-			Assert(this === scope);
-			Assert(payload === expectedPayload);
-		},scope,{
-			debounce : time
-		});
-
-		o.fireEvent(eventName,expectedPayload);
-		Assert(callCount === 0,'event fired regardless of debounce');
-
-		timeout = setTimeout(function () {
-			Assert(callCount === 0,'event fired regardless of debounce');
-			o.fireEvent(eventName,expectedPayload);
-			Assert(callCount === 0,'event fired regardless of debounce');
-			timeout = setTimeout(function () {
-				Assert(callCount === 0,'event fired regardless of debounce');
-				timeout = setTimeout(function () {
-					Assert(callCount === 1,'event didnt debounce when expected');
-					timeout = setTimeout(function () {
-						Assert(callCount === 1,'event debounced twice');
-						Resume();
-					},time);
-				},20);
-			},time - 10);
-		},time - 10);
-
-		Wait(cancel,200,'Debounce failed');
+		o.fireEvent('event',expectedPayload);
+		Assert(count === 1,'event wanst handled');
 	},
-	*/
+
+	'unregister with the mutli-signature' : function () {
+		var o = new Observable(),
+			expectedPayload = {},
+			scope = {},
+			expectedPayloadTwo = {},
+			scopeTwo = {},
+			count = 0,
+			countTwo = 0,
+			config = {
+				event : function (payload) {
+					Assert(this === scope,'scope wasnt passed');
+					Assert(payload === expectedPayload,'payload wasnt passed');
+					count++;
+				},
+				eventTwo : {
+					fn : function (payload) {
+						Assert(this === scopeTwo,'scope wasnt passed');
+						Assert(payload === expectedPayloadTwo,'payload wasnt passed');
+						countTwo++;
+					},
+					scope : scopeTwo
+				},
+				scope : scope
+			};
+
+		o.on(config);
+
+		o.fireEvent('event',expectedPayload);
+		o.fireEvent('eventTwo',expectedPayloadTwo);
+
+		Assert(count === 1,'event wasnt handled');
+		Assert(countTwo === 1,'second event wasnt handled');
+
+		o.un(config);
+
+		o.fireEvent('event',expectedPayload);
+		o.fireEvent('eventTwo',expectedPayloadTwo);
+
+		Assert(count === 1,'event was handled after being unregistered');
+		Assert(countTwo === 1,'second event was handled after being unregistered.');
+	},
 
 	'docs' : function () {
 		// Subclass or instantiate Observable
