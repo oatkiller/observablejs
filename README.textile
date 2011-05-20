@@ -10,6 +10,33 @@ h2. .on
 *handler* - {Function}, will be called in passed scope with any additional arguments passed to fireEvent
 *scope* - {Object} to call handler with
 
+@.on(config);@
+
+Second Signature has a single arguments, config:
+
+*config* - {Object} - Contains multiple handlers.
+
+Like:
+
+observble.on({
+	eventName : function () {
+	},
+	scope : scope
+});
+
+or:
+
+observable.on({
+	eventName : function () {
+	},
+	secondEventName : {
+		fn : function () {
+		},
+		scope : otherScope
+	},
+	scope : defaultScope
+});
+
 h2. .un
 
 *Unregister a handler*
