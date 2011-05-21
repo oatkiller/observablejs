@@ -129,49 +129,83 @@ var suite = new Suite({
 		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
 	},
 
-	/*
-	'debounce works' : function () {
-		var o = new Observable(),
-			eventName = 'fire',
-			scope = {},
-			time = 30,
-			callCount = 0,
-			expectedPayload = {},
-			timeout,
-			cancel = function () {
-				clearTimeout(timeout);
-			}
+	'removeAllListeners works with a param' : function () {
+		var o = new Observable();
+		var herp = {},
+			herpCount = 0,
+			derp = {},
+			derpCount = 0;
 
-		o.on(eventName,function (payload) {
-			callCount++;
-			Assert(this === scope);
-			Assert(payload === expectedPayload);
-		},scope,{
-			debounce : time
+		o.on({
+			herp : {
+				fn : function (payload) {
+					herpCount++;
+					Assert(payload === herp);
+					Assert(this === herp);
+				},
+				scope : herp
+			},
+			derp : {
+				fn : function (payload) {
+					derpCount++;
+					Assert(payload === derp);
+					Assert(this === derp);
+				},
+				scope : derp
+			}
 		});
 
-		o.fireEvent(eventName,expectedPayload);
-		Assert(callCount === 0,'event fired regardless of debounce');
+		o.fireEvent('herp',herp);
+		o.fireEvent('derp',derp);
+		Assert(herpCount === 1);
+		Assert(derpCount === 1);
 
-		timeout = setTimeout(function () {
-			Assert(callCount === 0,'event fired regardless of debounce');
-			o.fireEvent(eventName,expectedPayload);
-			Assert(callCount === 0,'event fired regardless of debounce');
-			timeout = setTimeout(function () {
-				Assert(callCount === 0,'event fired regardless of debounce');
-				timeout = setTimeout(function () {
-					Assert(callCount === 1,'event didnt debounce when expected');
-					timeout = setTimeout(function () {
-						Assert(callCount === 1,'event debounced twice');
-						Resume();
-					},time);
-				},20);
-			},time - 10);
-		},time - 10);
+		o.removeAllListeners('herp');
 
-		Wait(cancel,200,'Debounce failed');
+		o.fireEvent('herp',herp);
+		o.fireEvent('derp',derp);
+		Assert(herpCount === 1);
+		Assert(derpCount === 2);
 	},
-	*/
+
+	'removeAllListeners works without a param' : function () {
+		var o = new Observable();
+		var herp = {},
+			herpCount = 0,
+			derp = {},
+			derpCount = 0;
+
+		o.on({
+			herp : {
+				fn : function (payload) {
+					herpCount++;
+					Assert(payload === herp);
+					Assert(this === herp);
+				},
+				scope : herp
+			},
+			derp : {
+				fn : function (payload) {
+					derpCount++;
+					Assert(payload === derp);
+					Assert(this === derp);
+				},
+				scope : derp
+			}
+		});
+
+		o.fireEvent('herp',herp);
+		o.fireEvent('derp',derp);
+		Assert(herpCount === 1);
+		Assert(derpCount === 1);
+
+		o.removeAllListeners();
+
+		o.fireEvent('herp',herp);
+		o.fireEvent('derp',derp);
+		Assert(herpCount === 1);
+		Assert(derpCount === 1);
+	},
 
 	'docs' : function () {
 		// Subclass or instantiate Observable
