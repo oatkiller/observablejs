@@ -129,6 +129,7 @@ var suite = new Suite({
 		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
 	},
 
+<<<<<<< HEAD
 	'removeAllListeners works with a param' : function () {
 		var o = new Observable();
 		var herp = {},
@@ -205,6 +206,68 @@ var suite = new Suite({
 		o.fireEvent('derp',derp);
 		Assert(herpCount === 1);
 		Assert(derpCount === 1);
+	},
+
+	'register with default listeners' : function () {
+		var scope = {},
+			expectedPayload = {},
+			count = 0;
+
+		var o = new (Observable.subclass({
+			listeners : {
+				event : function (payload) {
+					Assert(this === scope,'scope wasnt passed');
+					Assert(payload === expectedPayload,'payload wasnt passed');
+					count++;
+				},
+				scope : scope
+			}
+		}))();
+
+		o.fireEvent('event',expectedPayload);
+		Assert(count === 1,'event wanst handled');
+	},
+
+	'unregister with the mutli-signature' : function () {
+		var o = new Observable(),
+			expectedPayload = {},
+			scope = {},
+			expectedPayloadTwo = {},
+			scopeTwo = {},
+			count = 0,
+			countTwo = 0,
+			config = {
+				event : function (payload) {
+					Assert(this === scope,'scope wasnt passed');
+					Assert(payload === expectedPayload,'payload wasnt passed');
+					count++;
+				},
+				eventTwo : {
+					fn : function (payload) {
+						Assert(this === scopeTwo,'scope wasnt passed');
+						Assert(payload === expectedPayloadTwo,'payload wasnt passed');
+						countTwo++;
+					},
+					scope : scopeTwo
+				},
+				scope : scope
+			};
+
+		o.on(config);
+
+		o.fireEvent('event',expectedPayload);
+		o.fireEvent('eventTwo',expectedPayloadTwo);
+
+		Assert(count === 1,'event wasnt handled');
+		Assert(countTwo === 1,'second event wasnt handled');
+
+		o.un(config);
+
+		o.fireEvent('event',expectedPayload);
+		o.fireEvent('eventTwo',expectedPayloadTwo);
+
+		Assert(count === 1,'event was handled after being unregistered');
+		Assert(countTwo === 1,'second event was handled after being unregistered.');
 	},
 
 	'docs' : function () {
