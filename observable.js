@@ -17,6 +17,14 @@ var Observable = function () {
 	 */
 	this.listeners = {};
 
+	/**
+	 * Holds names of suspended events
+	 * @private
+	 * @property
+	 * @type Object
+	 */
+	this.suspendedEvents = {};
+
 	// register initial listeners
 	initialListeners && this.on(initialListeners);
 };
@@ -158,6 +166,23 @@ Observable.prototype = {
 	},
 
 	/**
+	 * Suspend events for eventName until resumeEvents is called
+	 * @param {String} eventName
+	 * @method
+	 */
+	suspendEvents : function (eventName) {
+		this.suspendedEvents[eventName] = true;
+	},
+
+	/**
+	 * Resume events that were suspeneded with suspendEvents
+	 * @param {String} eventName
+	 */
+	resumeEvents : function (eventName) {
+		delete this.suspendedEvents[eventName];
+	},
+
+	/**
 	 * Remove all listeners
 	 * @param {String} [eventName] Optional to remove listeners of just one eventName instaed of all listeners
 	 * @method
@@ -196,6 +221,11 @@ Observable.prototype = {
 	 * @method
 	 */
 	fireEvent : function (eventName) {
+		// dont fire suspended events
+		if (this.suspendedEvents.hasOwnProperty(eventName)) {
+			return;
+		}
+
 		var listeners = this.getListenersByEventName(eventName),
 			i = 0,
 			listener,

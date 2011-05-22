@@ -129,7 +129,6 @@ var suite = new Suite({
 		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
 	},
 
-<<<<<<< HEAD
 	'removeAllListeners works with a param' : function () {
 		var o = new Observable();
 		var herp = {},
@@ -268,6 +267,27 @@ var suite = new Suite({
 
 		Assert(count === 1,'event was handled after being unregistered');
 		Assert(countTwo === 1,'second event was handled after being unregistered.');
+	},
+
+	'suspendEvents works' : function () {
+		var o = new Observable(),
+			eventName = 'event',
+			scope = {},
+			count = 0;
+
+		o.on(eventName,function () {
+			count++;
+		},scope);
+
+		o.fireEvent(eventName);
+
+		Assert(count === 1);
+
+		o.suspendEvents(eventName);
+
+		o.fireEvent(eventName);
+
+		Assert(count === 1);
 	},
 
 	'docs' : function () {
