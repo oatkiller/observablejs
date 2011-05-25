@@ -91,6 +91,10 @@ Observable.prototype = {
 			}
 		}
 	},
+	
+	hasListeners : function (eventName) {
+		return this.getListenersByEventName(eventName).length > 0;
+	},
 
 	/**
 	 * Calculate multiple calls from a single multi-handler argument. Calls the callee
@@ -201,7 +205,7 @@ Observable.prototype = {
 	 * @param {String} eventName
 	 * @private
 	 * @method
-	 * @returns {Object} Listener data for use in other methods
+	 * @returns {Array} Listeners for this eventName
 	 */
 	getListenersByEventName : function (eventName) {
 		return this.listeners.hasOwnProperty(eventName) ? this.listeners[eventName] : (this.listeners[eventName] = []);

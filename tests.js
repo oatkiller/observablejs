@@ -290,6 +290,22 @@ var suite = new Suite({
 		Assert(count === 1);
 	},
 
+	'hasListeners works' : function () {
+		var o = new Observable(),
+			eventName = 'eventName',
+			handler = function () {};
+
+		Assert(o.hasListeners(eventName) === false);
+
+		o.on('derp',handler);
+
+		Assert(o.hasListeners(eventName) === true);
+
+		o.un('derp',handler);
+
+		Assert(o.hasListeners(eventName) === false);
+	},
+
 	'docs' : function () {
 		// Subclass or instantiate Observable
 		var Door = Observable.subclass({
@@ -427,6 +443,51 @@ var suite = new Suite({
 
 		lockingDoor.open();
 		Assert(lockingDoor.closed === true,'Door opened');
+
+		// pause event handling with suspendEvents
+		var widget = new Observable();
+
+		// when you set x,
+		widget.setX = function (x) {
+			this.x = x;
+			// fire a moved event to let the view know to update
+			this.fireEvent('moved',this.x,this.y);
+		};
+
+		// do the same for setting y
+		widget.setY = function (y) {
+			this.y = y;
+			// fire a moved event to let the view know to update
+			this.fireEvent('moved',this.x,this.y);
+		};
+
+		widget.setPosition = function (x,y) {
+			// set both x and y
+			// this will fire two events
+			// so first, pause the event
+			this.suspendEvents('moved');
+			this.setX(x);
+			this.setY(y);
+
+			// now resume events,
+			this.resumeEvents('moved');
+
+			// and fire the event just once
+			this.fireEvent('moved',this.x,this.y);
+
+		};
+
+		var timesUpdated = 0;
+
+		widget.on('moved',function () {
+			// update the view
+			timesUpdated++;
+		});
+
+		widget.setPosition(1,2);
+
+		Assert(timesUpdated === 1,'suspendEvents didnt work');
+		
 	}
 
 });
