@@ -113,20 +113,17 @@ var suite = new Suite({
 		Assert(stopCount === 1,'stop didnt handle');
 	},
 
-	'cancel an event by passing false' : function () {
-		var o = new Observable(),
-			firstCount = 0,
-			secondCount = 0;
+	'get the returns of all listeners' : function () {
+		var o = new Observable();
 		o.on('event',function () {
-			firstCount++;
 			return false;
 		});
 		o.on('event',function () {
-			secondCount++;
+			return true;
 		});
-		o.fireEvent('event');
-		Assert(firstCount === 1,'First handler wasnt called');
-		Assert(secondCount === 0,'Second handler was called. Cancel by false didnt work');
+		var results = o.fireEvent('event');
+		Assert(results[0] === false);
+		Assert(results[1] === true);
 	},
 
 	'removeAllListeners works with a param' : function () {
@@ -297,13 +294,51 @@ var suite = new Suite({
 
 		Assert(o.hasListeners(eventName) === false);
 
-		o.on('derp',handler);
+		o.on(eventName,handler);
 
 		Assert(o.hasListeners(eventName) === true);
 
-		o.un('derp',handler);
+		o.un(eventName,handler);
 
 		Assert(o.hasListeners(eventName) === false);
+	},
+
+	'test' : function () {
+		var o = new Observable(),
+			aScope = {},
+			bScope = {},
+			cScope = {},
+			aCount = 0,
+			bCount = 0,
+			cCount = 0,
+			expectedPayload = {};
+
+		o.on({
+			a : {
+				fn : function () {
+					aCount++;
+				},
+				scope : aScope
+			},
+			b : {
+				fn : function () {
+					bCount++;
+				},
+				scope : bScope
+			},
+			c : function (payload) {
+				cCount++;
+				Assert(payload === expectedPayload);
+				Assert(this === cScope,'scope was not passed to handler');
+			},
+			scope : cScope
+		});
+
+		o.fireEvent('c',expectedPayload);
+
+		Assert(cCount === 1);
+		Assert(aCount === 0);
+		Assert(bCount === 0);
 	},
 
 	'docs' : function () {
@@ -414,36 +449,6 @@ var suite = new Suite({
 			}
 		});
 
-		// Cancel an event by passing false
-		var Door = Observable.subclass({
-			closed : true,
-			open : function () {
-				if (this.fireEvent('open')) {
-					// this wont happen, the event returns false after canceling
-					this.closed = false;
-				}
-			}
-		});
-		var LockingDoor = Door.subclass({
-			locked : true,
-			listeners : {
-				open : function () {
-					// dont open, its locked
-					return !this.locked;
-				}
-			}
-		});
-
-		var lockingDoor = new LockingDoor();
-
-		lockingDoor.on('open',function () {
-			// this wont happen, the event is cancelled
-			console.debug('Welcome!');
-		});
-
-		lockingDoor.open();
-		Assert(lockingDoor.closed === true,'Door opened');
-
 		// pause event handling with suspendEvents
 		var widget = new Observable();
 
@@ -487,8 +492,65 @@ var suite = new Suite({
 		widget.setPosition(1,2);
 
 		Assert(timesUpdated === 1,'suspendEvents didnt work');
-		
-	}
 
+		// Get the results of all handlers for an event
+		var LandMine = new Observable(),
+			Player = Function.klass({
+				constructor : function (config) {
+					this.health = config.health;
+					this.location = config.location;
+				},
+				handleExplosion : function (location) {
+					if (location.x === this.location.x && location.y === this.location.y) {
+						this.health--;
+						// report this
+						return this;
+					}
+				}
+			}),
+			playerA = new Player({
+				health : 5,
+				location : {
+					x : 4,
+					y : 4
+				}
+			}),
+			playerB = new Player({
+				health : 8,
+				location : {
+					x : 7,
+					y : 1
+				}
+			});
+
+		LandMine.on('explode',playerA.handleExplosion,playerA);
+		LandMine.on('explode',playerB.handleExplosion,playerB);
+
+		var damagedPlayers = LandMine.fireEvent('explode',{x : 7, y : 1});
+
+		Assert(damagedPlayers[0] === playerB);
+
+		// conditional event firing
+		// you might have to do extra calculation to fire an event
+		// avoid those calculations if there are no listeners
+
+		var Person = Function.klass({
+			setBirthday : function (date) {
+				if (this.birthday && date.getTime() !== this.birthday.getTime()) {
+					this.birthday = date;
+					if (this.hasListeners('newage')) {
+						// only calculate the new age if a listener is going to use it
+						// this is an alternate to memoizing getAge and still allows all listeners to only require one calculation of getAge
+						this.fireEvent('newage',this.getAge(),this);
+					}
+				}
+			},
+			// age in milliseconds.
+			getAge : function () {
+				var now = new Date().getTime();
+				return new Date().getTime() - now;
+			}
+		});
+	}
 });
 suite.run();

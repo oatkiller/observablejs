@@ -66,6 +66,7 @@ Observable.prototype = {
 					fn,
 					scope || defaultScope
 				]);
+				scope = undefined;
 			}
 		}
 		return signatures;
@@ -234,13 +235,16 @@ Observable.prototype = {
 			i = 0,
 			listener,
 			payload = this.slice.call(arguments,1),
-			result;
+			result,
+			results;
 
 		for (; i < listeners.length; i++) {
 			listener = listeners[i];
-			if (listener.fn.apply(listener.scope || this,payload) === false) {
-				return false;
+			if ((result = listener.fn.apply(listener.scope || this,payload)) !== undefined) {
+				results = results || [];
+				results.push(result);
 			}
 		}
+		return results;
 	}
 };
