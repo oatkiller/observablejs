@@ -248,3 +248,6 @@ Observable.prototype = {
 		return results;
 	}
 };
+if (typeof module !== 'undefined') {
+	module.exports = Observable;
+}
