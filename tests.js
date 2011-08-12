@@ -126,7 +126,7 @@ var suite = new Suite({
 		Assert(results[1] === true);
 	},
 
-	'removeAllListeners works with a param' : function () {
+	'removeAllListenersForEvent works' : function () {
 		var o = new Observable();
 		var herp = {},
 			herpCount = 0,
@@ -157,7 +157,7 @@ var suite = new Suite({
 		Assert(herpCount === 1);
 		Assert(derpCount === 1);
 
-		o.removeAllListeners('herp');
+		o.removeAllListenersForEvent('herp');
 
 		o.fireEvent('herp',herp);
 		o.fireEvent('derp',derp);
@@ -165,7 +165,7 @@ var suite = new Suite({
 		Assert(derpCount === 2);
 	},
 
-	'removeAllListeners works without a param' : function () {
+	'removeAllListeners works' : function () {
 		var o = new Observable();
 		var herp = {},
 			herpCount = 0,
@@ -202,6 +202,36 @@ var suite = new Suite({
 		o.fireEvent('derp',derp);
 		Assert(herpCount === 1);
 		Assert(derpCount === 1);
+	},
+
+	'removeAllListenersWithScope works' : function () {
+		var first = {},
+			second = {},
+			third = {},
+			count = 0,
+			observable = new Observable();
+
+		observable.on('herp',function () {count++;},first);
+		observable.on('herp',function () {count++;},second);
+		observable.on('herp',function () {count++;},third);
+
+		observable.on('derp',function () {count++;},first);
+		observable.on('derp',function () {count++;},second);
+		observable.on('derp',function () {count++;},third);
+
+		observable.on('skirp',function () {count++;},first);
+		observable.on('skirp',function () {count++;},second);
+		observable.on('skirp',function () {count++;},third);
+
+		observable.removeAllListenersWithScope(second);
+		Assert(observable.getListenersByEventName('herp').length === 2);
+		Assert(observable.getListenersByEventName('derp').length === 2);
+		Assert(observable.getListenersByEventName('skirp').length === 2);
+
+		observable.fireEvent('herp');
+		observable.fireEvent('derp');
+		observable.fireEvent('skirp');
+		Assert(count === 6);
 	},
 
 	'register with default listeners' : function () {

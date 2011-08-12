@@ -188,16 +188,37 @@ Observable.prototype = {
 	},
 
 	/**
-	 * Remove all listeners
-	 * @param {String} [eventName] Optional to remove listeners of just one eventName instaed of all listeners
+	 * Remove all listeners for an event type
+	 * @param {String} eventName remove listeners of eventName
 	 * @method
-	 * @returns {Observable} self for chaining.
 	 */
-	removeAllListeners : function (eventName) {
-		if (eventName) {
-			this.getListenersByEventName(eventName).length = 0;
-		} else {
-			this.listeners = {};
+	removeAllListenersForEvent : function (eventName) {
+		this.getListenersByEventName(eventName).length = 0;
+	},
+
+	/**
+	 * Remove all listeners
+	 * @method
+	 */
+	removeAllListeners : function () {
+		this.listeners = {};
+	},
+
+	/**
+	 * Remove all listeners that point to a scope
+	 * @param {Object} scope remove listeners that point to this scope
+	 * @method
+	 */
+	removeAllListenersWithScope : function (scope) {
+		for (var eventName in this.listeners) {
+			if (hasOwnProperty.call(this.listeners,eventName)) {
+				var eventListeners = this.listeners[eventName];
+				for (var i = 0; i < eventListeners.length; i++) {
+					if (eventListeners[i].scope === scope) {
+						eventListeners.splice(i--,1);
+					}
+				}
+			}
 		}
 	},
 
@@ -211,7 +232,7 @@ Observable.prototype = {
 	getListenersByEventName : function (eventName) {
 		return this.listeners.hasOwnProperty(eventName) ? this.listeners[eventName] : (this.listeners[eventName] = []);
 	},
-	
+
 	/**
 	 * @private
 	 * Slice, from Array.prototype
