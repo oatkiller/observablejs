@@ -333,7 +333,7 @@ var suite = new Suite({
 		Assert(o.hasListeners(eventName) === false);
 	},
 
-	'test' : function () {
+	'test some stuff' : function () {
 		var o = new Observable(),
 			aScope = {},
 			bScope = {},
@@ -371,7 +371,62 @@ var suite = new Suite({
 		Assert(bCount === 0);
 	},
 
-	'docs' : function () {
+	'test the once feature with single signature' : function () {
+		var observable = new observable(),
+			eventcount = 0,
+			scope = {},
+			payload = {};
+
+		observable.on('derp',function (passedpayload) {
+			eventcount++;
+		},scope,{once : true});
+
+		observable.fireevent('derp',payload);
+		observable.fireevent('derp',payload);
+		assert(eventcount === 1,'once didnt work');
+	},
+
+	'test the once feature with multiple signature' : function () {
+		var observable = new observable(),
+			eventcount = 0,
+			scope = {},
+			payload = {};
+
+		observable.on({
+			'derp' : function (passedpayload) {
+				eventcount++;
+			},
+			scope : scope,
+			once : true
+		});
+
+		observable.fireevent('derp',payload);
+		observable.fireevent('derp',payload);
+		assert(eventcount === 1,'once didnt work');
+	},
+
+	'test the once feature with complex multiple signature' : function () {
+		var observable = new observable(),
+			eventcount = 0,
+			scope = {},
+			payload = {};
+
+		observable.on({
+			'derp' : {
+				fn : function (passedpayload) {
+					eventcount++;
+				},
+				scope : scope,
+				once : true
+			}
+		});
+
+		observable.fireevent('derp',payload);
+		observable.fireevent('derp',payload);
+		assert(eventcount === 1,'once didnt work');
+	},
+
+	'test docs' : function () {
 		// Subclass or instantiate Observable
 		var Door = Observable.subclass({
 			open : function () {
