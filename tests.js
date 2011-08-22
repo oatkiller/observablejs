@@ -639,6 +639,22 @@ var suite = new Suite({
 				return new Date().getTime() - now;
 			}
 		});
+
+		// Use the once modifier to automatically unregister a one-time event
+		var teen = new Observable(),
+			timesTurned18 = 0;
+
+		teen.on('turned18',function () {
+			timesTurned18++;
+		},null,{once : true});
+
+		teen.fireEvent('turned18');
+
+		// the handler is automatically unregistered after one firing
+		teen.fireEvent('turned18');
+
+		Assert(timesTurned18 === 1,'Once did not work.');
+
 	}
 });
 suite.run();
