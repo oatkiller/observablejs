@@ -372,58 +372,61 @@ var suite = new Suite({
 	},
 
 	'test the once feature with single signature' : function () {
-		var observable = new observable(),
-			eventcount = 0,
+		var observable = new Observable(),
+			eventCount = 0,
 			scope = {},
 			payload = {};
 
-		observable.on('derp',function (passedpayload) {
-			eventcount++;
+		observable.on('derp',function (passedPayload) {
+			eventCount++;
+			Assert(passedPayload === payload);
 		},scope,{once : true});
 
-		observable.fireevent('derp',payload);
-		observable.fireevent('derp',payload);
-		assert(eventcount === 1,'once didnt work');
+		observable.fireEvent('derp',payload);
+		observable.fireEvent('derp',payload);
+		Assert(eventCount === 1,'once didnt work');
 	},
 
 	'test the once feature with multiple signature' : function () {
-		var observable = new observable(),
-			eventcount = 0,
+		var observable = new Observable(),
+			eventCount = 0,
 			scope = {},
 			payload = {};
 
 		observable.on({
-			'derp' : function (passedpayload) {
-				eventcount++;
+			'derp' : function (passedPayload) {
+				eventCount++;
+				Assert(passedPayload === payload);
 			},
 			scope : scope,
 			once : true
 		});
 
-		observable.fireevent('derp',payload);
-		observable.fireevent('derp',payload);
-		assert(eventcount === 1,'once didnt work');
+		observable.fireEvent('derp',payload);
+		observable.fireEvent('derp',payload);
+		Assert(eventCount === 1,'once didnt work');
 	},
 
 	'test the once feature with complex multiple signature' : function () {
-		var observable = new observable(),
-			eventcount = 0,
+		var observable = new Observable(),
+			eventCount = 0,
 			scope = {},
 			payload = {};
 
 		observable.on({
 			'derp' : {
-				fn : function (passedpayload) {
-					eventcount++;
+				fn : function (passedPayload) {
+					eventCount++;
+					Assert(passedPayload === payload);
 				},
 				scope : scope,
 				once : true
 			}
 		});
 
-		observable.fireevent('derp',payload);
-		observable.fireevent('derp',payload);
-		assert(eventcount === 1,'once didnt work');
+		observable.fireEvent('derp',payload);
+		observable.fireEvent('derp',payload);
+		Assert(eventCount === 1,'once didnt work');
 	},
 
 	'test docs' : function () {
